@@ -44,6 +44,14 @@ Khác với các công cụ thông thường bật ra một trình duyệt trắ
 * Dùng cây trợ năng (Accessibility Tree) của Chrome, mỗi phần tử tương tác được đánh số `uid` (ví dụ: `[uid: 10] button "Đăng nhập"`).
 * AI tương tác chính xác 100%: `fill(14, "email@example.com")` và `click(10)`.
 
+### 4. Bản đồ ứng dụng (`tether-map`)
+
+Trình cài đặt đăng ký thêm MCP server `tether-map`. Khi agent khảo sát ứng dụng trong Chrome, server này lưu các trang đã đi qua và gom request theo phương thức cùng mẫu đường dẫn. Ví dụ, hai request `GET /api/orders/123` và `GET /api/orders/456` được gom thành `GET /api/orders/{id}`. Bản đồ cũng ghi mã trạng thái, **tên** tham số truy vấn và trang nơi request xuất hiện.
+
+Bạn có thể yêu cầu: **“Hãy lập bản đồ các trang và API quan sát được khi khảo sát https://app.example.com.”** Agent sẽ gọi `start_app_map`, dùng Chrome để duyệt, gọi `record_app_page` cho từng trang, chuyển thông tin từ `list_network_requests` vào `record_app_requests`, rồi đọc kết quả bằng `get_app_map({kind: "api"})`. Bản đồ hỗ trợ phân trang bằng `page_offset`, `endpoint_offset` và `limit`.
+
+Phiên bản này cần agent chuyển thông tin request sang `tether-map`; server chưa tự chặn hay ghi toàn bộ lưu lượng Chrome. Chỉ các origin được khai báo được ghi nhận. Body, header, cookie, giá trị query và fragment không được lưu. File mặc định là `~/.chrometether/app-map.json`; có thể đổi bằng biến môi trường `CHROMETETHER_MAP_FILE`. Gọi `start_app_map` sẽ thay bản đồ cũ trong file đó.
+
 ---
 
 ## 🚀 Cài đặt nhanh 1-Click
@@ -126,7 +134,10 @@ Bộ test sẽ xác minh:
 * Khả năng chuyển đổi HTML sang Markdown của Fast Reader.
 * Tìm kiếm DuckDuckGo không cần API key.
 * Kết nối JSON-RPC chuẩn MCP của `tether-reader`.
+* Kết nối JSON-RPC chuẩn MCP của `tether-map`.
 * Khả năng khởi động Stdio MCP của `chrome-devtools`.
+
+Chạy `npm run test-map` để kiểm tra bản đồ ứng dụng không cần mạng và `npm run test-merger` để kiểm tra cấu hình installer.
 
 ---
 

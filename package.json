@@ -14,6 +14,8 @@
   },
   "scripts": {
     "start-reader": "node src/reader-server/index.js",
+    "start-map": "node src/app-map/server.js",
+    "test-map": "node --test test/app-map.test.js",
     "test-reader": "node test/reader-test.js",
     "test-merger": "node test/merger-test.js",
     "test": "node bin/test-connection.js",

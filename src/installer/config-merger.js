@@ -15,6 +15,7 @@ const DEFAULT_PROJECT_DIR = path.resolve(__dirname, '..', '..');
 export function getBrowserMcpConfigs(projectDir = DEFAULT_PROJECT_DIR) {
   const normalizedProjectDir = path.resolve(projectDir);
   const readerScript = path.join(normalizedProjectDir, 'src', 'reader-server', 'index.js');
+  const mapScript = path.join(normalizedProjectDir, 'src', 'app-map', 'server.js');
   const chromeDevToolsScript = path.join(
     normalizedProjectDir,
     'node_modules',
@@ -38,6 +39,10 @@ export function getBrowserMcpConfigs(projectDir = DEFAULT_PROJECT_DIR) {
       args: [
         readerScript
       ]
+    },
+    'tether-map': {
+      command: 'node',
+      args: [mapScript]
     }
   };
 }
@@ -50,6 +55,7 @@ export function getBrowserMcpConfigs(projectDir = DEFAULT_PROJECT_DIR) {
 export function getOpenCodeMcpConfigs(projectDir = DEFAULT_PROJECT_DIR) {
   const normalizedProjectDir = path.resolve(projectDir);
   const readerScript = path.join(normalizedProjectDir, 'src', 'reader-server', 'index.js');
+  const mapScript = path.join(normalizedProjectDir, 'src', 'app-map', 'server.js');
   const chromeDevToolsScript = path.join(
     normalizedProjectDir,
     'node_modules',
@@ -76,6 +82,11 @@ export function getOpenCodeMcpConfigs(projectDir = DEFAULT_PROJECT_DIR) {
         'node',
         readerScript
       ],
+      enabled: true
+    },
+    'tether-map': {
+      type: 'local',
+      command: ['node', mapScript],
       enabled: true
     }
   };
@@ -89,6 +100,7 @@ export function getOpenCodeMcpConfigs(projectDir = DEFAULT_PROJECT_DIR) {
 export function getZCodeMcpConfigs(projectDir = DEFAULT_PROJECT_DIR) {
   const normalizedProjectDir = path.resolve(projectDir);
   const readerScript = path.join(normalizedProjectDir, 'src', 'reader-server', 'index.js');
+  const mapScript = path.join(normalizedProjectDir, 'src', 'app-map', 'server.js');
   const chromeDevToolsScript = path.join(
     normalizedProjectDir,
     'node_modules',
@@ -114,6 +126,11 @@ export function getZCodeMcpConfigs(projectDir = DEFAULT_PROJECT_DIR) {
       args: [
         readerScript
       ]
+    },
+    'tether-map': {
+      type: 'stdio',
+      command: 'node',
+      args: [mapScript]
     }
   };
 }
