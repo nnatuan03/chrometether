@@ -16,13 +16,13 @@
 
 ```mermaid
 flowchart TD
-    User["Yêu cầu duyệt web của bạn"] --> Agent["AI Agent (ZCode, OpenCode, Claude, Cursor)"]
-    Agent --> Decision{"Mục tiêu tác vụ?"}
+    User["Your web request"] --> Agent["AI Agent (ZCode, OpenCode, Claude, Cursor)"]
+    Agent --> Decision{"Task type?"}
     
-    Decision -- "Đọc tài liệu, blog, GitHub, tìm kiếm web" --> Tier1["Tầng 1: Fast Reader (tether-reader)"]
+    Decision -- "Docs, blogs, GitHub, web search" --> Tier1["Tier 1: Fast Reader (tether-reader)"]
     Tier1 --> Res1["HTTP GET + Cheerio + Turndown\n(~150ms, 0MB RAM Chrome)"]
     
-    Decision -- "Web động (SPA), điền form, click, tab thật, debug" --> Tier2["Tầng 2: Chrome trực tiếp (chrome-devtools)"]
+    Decision -- "Dynamic sites, forms, clicks, debugging" --> Tier2["Tier 2: Live Chrome (chrome-devtools)"]
     Tier2 --> Res2["Chrome DevTools Protocol (CDP)\n(Accessibility Tree UID, Screenshots, Network, Console)"]
 ```
 
@@ -41,7 +41,7 @@ Khác với các công cụ thông thường bật ra một trình duyệt trắ
 
 ### 3. Tương tác chính xác qua Accessibility Tree `uid`
 * Không gây tràn token do nhồi nhét mã HTML thô.
-* Dùng cây trợ năng (Accessibility Tree) của Chrome, mỗi phần tử tương tác được đánh số `uid` (ví dụ: `[uid: 10] button "Đăng nhập"`).
+* Dùng cây trợ năng (Accessibility Tree) của Chrome, mỗi phần tử tương tác được đánh số `uid` (ví dụ: `[uid: 10] button "Log in"`).
 * AI tương tác chính xác 100%: `fill(14, "email@example.com")` và `click(10)`.
 
 ### 4. Bản đồ ứng dụng (`tether-map`)
@@ -78,13 +78,13 @@ git clone https://github.com/toannguyen3107/chrometether.git
 cd chrometether
 npm install
 
-# Kiểm tra trạng thái các agent trên máy
+# Check installed agents
 node bin/chrometether.js status
 
-# Tự động cấu hình toàn bộ các agent được tìm thấy
+# Configure all detected agents
 node bin/chrometether.js install all
 
-# Hoặc cài riêng cho từng agent cụ thể
+# Or install for a specific agent
 node bin/chrometether.js install zcode
 node bin/chrometether.js install opencode
 node bin/chrometether.js install claude-code
