@@ -56,9 +56,9 @@ function queryNames(url) {
 function requestKind(url, method, resourceType) {
   const type = String(resourceType || '').toLowerCase();
   if (['fetch', 'xhr'].includes(type) || /^\/(api|graphql|v\d+)(\/|$)/i.test(url.pathname)) return 'api';
+  if (method !== 'GET' && method !== 'HEAD') return 'api';
   if (type === 'document') return 'navigation';
   if (['script', 'stylesheet', 'image', 'font', 'media'].includes(type) || /\.(js|css|png|jpe?g|gif|svg|webp|woff2?|ico)$/i.test(url.pathname)) return 'asset';
-  if (method !== 'GET' && method !== 'HEAD') return 'api';
   return 'other';
 }
 
@@ -118,7 +118,9 @@ export class AppMapStore {
     const map = this.read();
     const url = parseWebUrl(pageUrl);
     this.assertAllowed(map, url);
-    if (typeof title !== 'string' || title.length > 200) throw new Error('title must be a string of at most 200 characters');
+    if (title == null) title = '';
+    if (typeof title !== 'string') throw new Error('title must be a string');
+    title = title.slice(0, 200);
     const pagePath = pathTemplate(url.pathname);
     const key = url.origin + pagePath;
     let page = map.pages.find(item => item.url === key);
@@ -146,16 +148,29 @@ export class AppMapStore {
     let skipped = 0;
     const pageKey = page.origin + pathTemplate(page.pathname);
     for (const request of requests) {
-      if (!request || typeof request !== 'object') throw new Error('Each request must be an object');
-      const url = parseWebUrl(request.url);
+      if (!request || typeof request !== 'object' || Array.isArray(request)) {
+        skipped++;
+        continue;
+      }
+      let url;
+      try {
+        url = parseWebUrl(request.url);
+      } catch {
+        skipped++;
+        continue;
+      }
       if (!map.allowedOrigins.includes(url.origin)) {
         skipped++;
         continue;
       }
       const method = String(request.method || 'GET').toUpperCase();
-      if (!/^[A-Z]{1,20}$/.test(method)) throw new Error('Invalid request method');
+      if (!/^[A-Z]{1,20}$/.test(method)) {
+        skipped++;
+        continue;
+      }
       const endpointPath = pathTemplate(url.pathname);
-      const kind = requestKind(url, method, request.resourceType);
+      const resourceType = request.resourceType ?? request.resource_type;
+      const kind = requestKind(url, method, resourceType);
       const key = `${method} ${url.origin}${endpointPath}`;
       let endpoint = map.endpoints.find(item => item.key === key);
       if (!endpoint) {
@@ -167,8 +182,8 @@ export class AppMapStore {
       endpoint.count++;
       const status = Number(request.status);
       if (Number.isInteger(status) && status >= 100 && status <= 599) addUnique(endpoint.statusCodes, [status]);
-      if (typeof request.resourceType === 'string' && /^[\w-]{1,40}$/.test(request.resourceType)) {
-        addUnique(endpoint.resourceTypes, [request.resourceType]);
+      if (typeof resourceType === 'string' && /^[\w-]{1,40}$/.test(resourceType)) {
+        addUnique(endpoint.resourceTypes, [resourceType]);
       }
       addUnique(endpoint.queryParameters, queryNames(url));
       addUnique(endpoint.seenOnPages, [pageKey]);

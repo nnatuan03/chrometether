@@ -28,7 +28,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         type: 'object',
         properties: {
           page_url: { type: 'string' },
-          title: { type: 'string' }
+          title: { type: ['string', 'null'], description: 'Optional page title; values longer than 200 characters are shortened' }
         },
         required: ['page_url']
       }
@@ -49,7 +49,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
                 url: { type: 'string' },
                 method: { type: 'string' },
                 status: { type: 'number' },
-                resourceType: { type: 'string' }
+                resourceType: { type: 'string' },
+                resource_type: { type: 'string', description: 'Alternative spelling of resourceType' }
               },
               required: ['url']
             }

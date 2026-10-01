@@ -48,7 +48,12 @@ Khác với các công cụ thông thường bật ra một trình duyệt trắ
 
 Trình cài đặt đăng ký thêm MCP server `tether-map`. Khi agent khảo sát ứng dụng trong Chrome, server này lưu các trang đã đi qua và gom request theo phương thức cùng mẫu đường dẫn. Ví dụ, hai request `GET /api/orders/123` và `GET /api/orders/456` được gom thành `GET /api/orders/{id}`. Bản đồ cũng ghi mã trạng thái, **tên** tham số truy vấn và trang nơi request xuất hiện.
 
-Bạn có thể yêu cầu: **“Hãy lập bản đồ các trang và API quan sát được khi khảo sát https://app.example.com.”** Agent sẽ gọi `start_app_map`, dùng Chrome để duyệt, gọi `record_app_page` cho từng trang, chuyển thông tin từ `list_network_requests` vào `record_app_requests`, rồi đọc kết quả bằng `get_app_map({kind: "api"})`. Bản đồ hỗ trợ phân trang bằng `page_offset`, `endpoint_offset` và `limit`.
+Bạn có thể yêu cầu: **“Hãy lập bản đồ các trang và API quan sát được khi khảo sát https://app.example.com.”** Quy trình:
+
+1. Gọi `start_app_map(target_url)`; thêm `allowed_origins` nếu ứng dụng dùng API ở origin riêng.
+2. Duyệt bằng `chrome-devtools`, rồi gọi `record_app_page(page_url, title)` cho từng trang đã ghé thăm.
+3. Gọi `list_network_requests({includePreservedRequests: true})` để giữ các request qua lần chuyển trang, rồi chuyển URL, phương thức, mã trạng thái và loại tài nguyên sang `record_app_requests(page_url, requests)`. Mỗi lần gọi nhận tối đa 200 request.
+4. Gọi `get_app_map({kind: "api"})` để xem các endpoint API. Dùng `page_offset`, `endpoint_offset` và `limit` để phân trang kết quả.
 
 Phiên bản này cần agent chuyển thông tin request sang `tether-map`; server chưa tự chặn hay ghi toàn bộ lưu lượng Chrome. Chỉ các origin được khai báo được ghi nhận. Body, header, cookie, giá trị query và fragment không được lưu. File mặc định là `~/.chrometether/app-map.json`; có thể đổi bằng biến môi trường `CHROMETETHER_MAP_FILE`. Gọi `start_app_map` sẽ thay bản đồ cũ trong file đó.
 
@@ -114,7 +119,7 @@ chrome.exe --remote-debugging-port=9222
 
 | Agent | File cấu hình | Tính năng được tích hợp |
 | :--- | :--- | :--- |
-| **ZCode (Z.ai)** | `~/.zcode/cli/config.json` | Tự động đăng ký MCP `chrome-devtools` & `tether-reader`. Tích hợp sẵn lệnh `/browser` trong `~/.zcode/commands/` và bộ 5 skills chính thức trong `~/.zcode/skills/`. |
+| **ZCode (Z.ai)** | `~/.zcode/cli/config.json` | Đăng ký `chrome-devtools`, `tether-reader` và `tether-map`. Cài lệnh `/browser` cùng bộ browser skills. |
 | **OpenCode CLI** | `~/.config/opencode/opencode.jsonc` | Tự động merge theo chuẩn mảng `command` của OpenCode với `--auto-connect`. |
 | **Claude Code CLI** | `~/.claude.json` | Cấu hình MCP + tự động sao chép skills vào `~/.claude/skills/`. |
 | **Claude Desktop** | `claude_desktop_config.json` | Tự động merge cấu hình stdio MCP. |

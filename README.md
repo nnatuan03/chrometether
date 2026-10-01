@@ -52,7 +52,7 @@ Ask your agent: **“Map the pages and API requests you observe while exploring 
 
 1. `start_app_map(target_url)`; include `allowed_origins` if the application uses a separate API origin.
 2. Navigate with `chrome-devtools`, then call `record_app_page(page_url, title)` for visited pages.
-3. Call Chrome DevTools `list_network_requests` and pass the observed URL, method, status, and resource type to `record_app_requests(page_url, requests)`. Calls accept up to 200 requests.
+3. Call Chrome DevTools `list_network_requests({includePreservedRequests: true})` and pass the observed URL, method, status, and resource type to `record_app_requests(page_url, requests)`. Calls accept up to 200 requests.
 4. Call `get_app_map({kind: "api"})` to focus on API endpoints. Use `endpoint_offset`, `page_offset`, and `limit` to page through the saved map (50 items per group by default, at most 100).
 
 This first version relies on the agent to pass Chrome observations to `tether-map`; it does not intercept traffic automatically. Only explicitly allowed origins are recorded. Request bodies, headers, cookies, URL query values, and fragments are not saved. The map defaults to `~/.chrometether/app-map.json` (override with `CHROMETETHER_MAP_FILE` before starting the MCP server). `start_app_map` replaces the existing map at that path.

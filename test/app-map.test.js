@@ -42,7 +42,49 @@ test('builds a reusable map from browser pages and network requests without stor
     for (const secret of ['private-value', 'secret-1', 'secret-2', 'do-not-store', 'authorization']) {
       assert.ok(!persisted.includes(secret), `Persisted map contains ${secret}`);
     }
-    assert.equal(fs.statSync(filePath).mode & 0o777, 0o600);
+    if (process.platform !== 'win32') assert.equal(fs.statSync(filePath).mode & 0o777, 0o600);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('skips invalid requests without losing valid requests in the same batch', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'chrometether-map-'));
+  try {
+    const store = new AppMapStore(path.join(directory, 'map.json'));
+    store.start('https://shop.example');
+    const result = store.recordRequests('https://shop.example/orders', [
+      { url: 'data:image/png;base64,abc' },
+      { url: 'https://shop.example/api/orders/1', method: 'GET', resource_type: 'fetch' },
+      { url: 'blob:https://shop.example/id' },
+      { url: 'not a url' },
+      { url: 'https://shop.example/' + 'x'.repeat(4096) },
+      { url: 'https://shop.example/api/orders/2', method: 'GET', resourceType: 'xhr' }
+    ]);
+    assert.equal(result.recorded, 2);
+    assert.equal(result.skipped, 4);
+    const endpoint = store.summary().endpoints[0];
+    assert.equal(endpoint.count, 2);
+    assert.deepEqual(endpoint.resourceTypes, ['fetch', 'xhr']);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('normalizes page titles and surfaces document POST requests as API traffic', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'chrometether-map-'));
+  try {
+    const store = new AppMapStore(path.join(directory, 'map.json'));
+    store.start('https://shop.example');
+    assert.equal(store.recordPage('https://shop.example/orders', null).page.title, '');
+    assert.equal(store.recordPage('https://shop.example/orders', 'x'.repeat(250)).page.title.length, 200);
+    store.recordRequests('https://shop.example/orders', [
+      { url: 'https://shop.example/checkout', method: 'POST', resourceType: 'document' },
+      { url: 'https://shop.example/orders', method: 'GET', resourceType: 'document' }
+    ]);
+    const endpoints = store.summary().endpoints;
+    assert.equal(endpoints.find(item => item.method === 'POST').kind, 'api');
+    assert.equal(endpoints.find(item => item.method === 'GET').kind, 'navigation');
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
